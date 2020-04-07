@@ -5,7 +5,7 @@ use std::env;
 use warp::{reject, reply, Filter, Rejection, Reply};
 
 mod country_info;
-use country_info::CountryInfo;
+use country_info::Country;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ListOptions {
@@ -107,21 +107,21 @@ pub async fn get_country_recovered(
                 let filtered = countries
                     .into_iter()
                     .filter(|country| country.recovered > min)
-                    .collect::<Vec<CountryInfo>>();
+                    .collect::<Vec<Country>>();
                 Ok(reply::json(&filtered))
             }
             (None, Some(max)) => {
                 let filtered = countries
                     .into_iter()
                     .filter(|country| country.recovered < max)
-                    .collect::<Vec<CountryInfo>>();
+                    .collect::<Vec<Country>>();
                 Ok(reply::json(&filtered))
             }
             (Some(min), Some(max)) => {
                 let filtered = countries
                     .into_iter()
                     .filter(|country| country.recovered > min && country.recovered < max)
-                    .collect::<Vec<CountryInfo>>();
+                    .collect::<Vec<Country>>();
                 Ok(reply::json(&filtered))
             }
             (None, None) => Ok(reply::json(&countries)),
@@ -140,21 +140,21 @@ pub async fn get_country_deaths(
                 let filtered = countries
                     .into_iter()
                     .filter(|country| country.deaths > min)
-                    .collect::<Vec<CountryInfo>>();
+                    .collect::<Vec<Country>>();
                 Ok(reply::json(&filtered))
             }
             (None, Some(max)) => {
                 let filtered = countries
                     .into_iter()
                     .filter(|country| country.deaths < max)
-                    .collect::<Vec<CountryInfo>>();
+                    .collect::<Vec<Country>>();
                 Ok(reply::json(&filtered))
             }
             (Some(min), Some(max)) => {
                 let filtered = countries
                     .into_iter()
                     .filter(|country| country.deaths > min && country.deaths < max)
-                    .collect::<Vec<CountryInfo>>();
+                    .collect::<Vec<Country>>();
                 Ok(reply::json(&filtered))
             }
             (None, None) => Ok(reply::json(&countries)),
@@ -169,7 +169,10 @@ pub async fn get_all_countries(
 ) -> Result<impl warp::Reply, warp::Rejection> {
     match fetch_url(upstream_url).await {
         Ok(countries) => Ok(reply::json(&countries)),
-        Err(_) => Err(warp::reject::custom(FetchError)),
+        Err(err) => {
+            println!("Err: {:?}", err);
+            Err(warp::reject::custom(FetchError))
+        }
     }
 
     // Another way to do this..
@@ -179,8 +182,7 @@ pub async fn get_all_countries(
     //     .map_err(|_| warp::reject::custom(FetchError))
 }
 
-async fn fetch_url(url: reqwest::Url) -> Result<Vec<CountryInfo>, reqwest::Error> {
+async fn fetch_url(url: reqwest::Url) -> Result<Vec<Country>, reqwest::Error> {
     let data = reqwest::get(url).await?.json().await?;
-
     Ok(data)
 }
