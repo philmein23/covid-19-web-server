@@ -1,3 +1,3 @@
 mod model;
 
-pub use model::CountryInfo;
+pub use model::Country;
